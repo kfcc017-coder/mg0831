@@ -268,7 +268,14 @@
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col h-[500px]">
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h3 class="text-lg font-bold text-gray-800">월별 상환 스케줄</h3>
-                        <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">단위: 원</span>
+                        <div class="flex items-center gap-2">
+                            <!-- 엑셀 다운로드 버튼 (초기엔 숨김) -->
+                            <button id="downloadBtn" onclick="downloadCSV()" class="hidden items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                엑셀 다운로드
+                            </button>
+                            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">단위: 원</span>
+                        </div>
                     </div>
                     
                     <!-- Table Header -->
@@ -304,6 +311,9 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // 전역 스케줄 데이터 저장용 변수 (CSV 다운로드용)
+        let globalScheduleData = [];
+
         // 상환 방식 선택 처리 함수
         function selectRepayType(element, type) {
             // 모든 옵션에서 selected 클래스 제거
@@ -474,6 +484,7 @@
             }
 
             // 3. 결과 렌더링
+            globalScheduleData = schedule; // 다운로드를 위해 전역 변수에 저장
             renderResults(schedule, totalInterest, principal);
         }
 
@@ -504,6 +515,48 @@
                 `;
                 tbody.appendChild(rowEl);
             });
+
+            // 계산 완료 후 다운로드 버튼 표시
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.classList.remove('hidden');
+            downloadBtn.classList.add('flex');
+        }
+
+        // CSV 엑셀 다운로드 기능 추가
+        function downloadCSV() {
+            if (globalScheduleData.length === 0) {
+                alert('다운로드할 데이터가 없습니다.');
+                return;
+            }
+
+            // 엑셀에서 한글이 깨지지 않도록 BOM(\uFEFF) 추가
+            let csvContent = '\uFEFF';
+            csvContent += '회차,납입 원금(원),대출 이자(원),월 상환금(원),대출 잔액(원)\n';
+
+            globalScheduleData.forEach(row => {
+                // CSV에서는 콤마(,)가 열 구분자이므로 숫자에 콤마를 제거한 순수 숫자로 저장하여 엑셀에서 계산하기 쉽게 함
+                let rowStr = [
+                    row.month + '회',
+                    row.principal,
+                    row.interest,
+                    row.payment,
+                    row.balance
+                ].join(',');
+                csvContent += rowStr + '\n';
+            });
+
+            // Blob 객체 생성 후 다운로드 유도
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', '새마을금고_대출상환스케줄.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // 초기 로딩 시 기본값 포맷팅
