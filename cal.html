@@ -12,7 +12,7 @@
                 extend: {
                     colors: {
                         mgBlue: {
-                            50: '#e6f4fc', // Lightest blue for backgrounds
+                            50: '#e6f4fc',
                             100: '#c1e5f8',
                             200: '#9cd6f4',
                             300: '#77c7f0',
@@ -22,7 +22,7 @@
                             700: '#005e9c',
                             800: '#004c7d',
                         },
-                        mgTeal: '#41c7f4' // MG Point Color (MG Light Blue로 대체)
+                        mgTeal: '#41c7f4'
                     },
                     fontFamily: {
                         sans: ['Pretendard', 'Malgun Gothic', 'sans-serif'],
@@ -37,7 +37,7 @@
         
         body {
             font-family: 'Pretendard', sans-serif;
-            background-color: #f8fafc; /* 더 밝은 배경색 */
+            background-color: #f8fafc;
         }
 
         /* 커스텀 스크롤바 */
@@ -111,10 +111,16 @@
                     <svg class="w-10 h-10 text-mgBlue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 group-hover:text-mgBlue-600 transition-colors">MG 맞춤형 대출 계산기</h1>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 group-hover:text-mgBlue-600 transition-colors">MG 맞춤형 대출 상환 계산기</h1>
                 </a>
             </div>
-            <div class="text-sm sm:text-base font-medium text-gray-500 hidden sm:block">금융을 새롭게, 금고를 이롭게</div>
+            <div class="flex flex-col items-end">
+                <a href="https://kfcc017-coder.github.io/mg0831/" class="mb-1 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-mgBlue-600 bg-mgBlue-50 rounded-full hover:bg-mgBlue-100 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    홈으로 가기
+                </a>
+                <div class="text-sm sm:text-base font-medium text-gray-500 hidden sm:block">금융을 새롭게, 금고를 이롭게</div>
+            </div>
         </div>
     </header>
 
