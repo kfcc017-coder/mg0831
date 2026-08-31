@@ -414,6 +414,59 @@
             let totalInterest = 0;
             let totalPrincipal = 0;
 
+            // --- 체증식 상환금 계산을 위한 사전 준비 ---
+            let firstMonthPayment = 0; // 1회차 상환액
+            let monthlyIncreaseAmount = 0; // 매월 증가하는 상환액 (공차 d)
+
+            if (repayType === 'increasing' && repayMonths > 0) {
+                // 시중은행의 일반적인 선형 체증식 모델 (Linear GPM) 적용
+                // 월 상환액(Payment)이 매월 일정 금액(d)만큼 증가하도록 설정
+                
+                if (monthlyRate === 0) {
+                    // 이자율이 0%인 경우: (단순 등차수열의 합)
+                    // P_t = P_1 + (t-1)*d, Sum(P_t) = 원금
+                    // 임의로 첫 달 상환액을 마지막 달의 절반 수준으로 설정한다고 가정
+                    // P_1 = 원금 / (repayMonths * 1.5) 정도의 비율로 임의 설정 가능
+                    // 여기서는 1회차를 평균의 50% 수준으로 시작하도록 설정
+                    let avgPrincipal = principal / repayMonths;
+                    firstMonthPayment = avgPrincipal * 0.5;
+                    // n * P_1 + d * n(n-1)/2 = 원금
+                    monthlyIncreaseAmount = (principal - repayMonths * firstMonthPayment) * 2 / (repayMonths * (repayMonths - 1));
+                } else {
+                    // 이자가 있는 경우: 현재가치(PV) 공식 활용
+                    // 원금 = Sum [ (P_1 + (t-1)*d) / (1+r)^t ] (t=1 to n)
+                    
+                    // 1. 초기 상환액(P_1) 설정: 
+                    // 체증식의 목적상 초기 부담을 최소화해야 하므로, 첫 달 상환액을 '첫 달 이자액(거치 후 잔액 기준)'과 동일하게 설정합니다. (원금 상환 0원 시작)
+                    // 단, 1회차 원금상환이 0보다 커야 하므로 미세한 여유분을 더합니다.
+                    let initialInterest = Math.floor(principal * monthlyRate);
+                    firstMonthPayment = initialInterest + 1000; // 첫 달 원금을 1,000원으로 고정 (은행마다 다름)
+
+                    // 2. 증가분(d) 역산:
+                    // PV_sum = P_1 * Sum[1/(1+r)^t] + d * Sum[(t-1)/(1+r)^t]
+                    // 원금 = P_1 * A + d * B
+                    // 따라서, d = (원금 - P_1 * A) / B
+
+                    let sumA = 0;
+                    let sumB = 0;
+                    for (let t = 1; t <= repayMonths; t++) {
+                        let discountFactor = Math.pow(1 + monthlyRate, t);
+                        sumA += 1 / discountFactor;
+                        sumB += (t - 1) / discountFactor;
+                    }
+
+                    monthlyIncreaseAmount = (principal - firstMonthPayment * sumA) / sumB;
+
+                    // 만약 d가 음수라면 (대출 기간이 너무 짧거나 이자율이 비정상적인 경우), 원리금균등으로 폴백하거나 d를 0으로 강제
+                    if (monthlyIncreaseAmount <= 0) {
+                        monthlyIncreaseAmount = 0;
+                        // 원리금 균등 방식으로 다시 계산 (PMT)
+                        firstMonthPayment = (principal * monthlyRate * Math.pow(1 + monthlyRate, repayMonths)) / (Math.pow(1 + monthlyRate, repayMonths) - 1);
+                    }
+                }
+            }
+
+
             // 원리금균등분할상환 시 매월 납부액(PMT)을 미리 계산 (거치기간 후 상환기간 기준)
             let fixedPmt = 0;
             if (repayType === 'equal_pi' && repayMonths > 0) {
@@ -455,9 +508,18 @@
                             monthlyPrincipal = principal / repayMonths;
                             monthlyPayment = monthlyPrincipal + monthlyInterest;
                         } else if (repayType === 'increasing') {
-                            // 체증식분할상환 (선형 원금 증가 모델 적용)
-                            monthlyPrincipal = j * (2 * principal) / (repayMonths * (repayMonths + 1));
-                            monthlyPayment = monthlyPrincipal + monthlyInterest;
+                            // 체증식분할상환 (올바른 월 상환액 일정 증가 모델)
+                            // t회차 월 상환액 = P_1 + (t-1) * d
+                            monthlyPayment = firstMonthPayment + ((j - 1) * monthlyIncreaseAmount);
+                            
+                            // 원금은 상환액에서 이자를 뺀 값
+                            monthlyPrincipal = monthlyPayment - monthlyInterest;
+                            
+                            // 방어 코드: 상환액이 이자보다 작아서 원금이 마이너스가 되는 현상 방지
+                            if (monthlyPrincipal < 0) {
+                                monthlyPrincipal = 0;
+                                monthlyPayment = monthlyInterest; 
+                            }
                         }
                     }
                 }
